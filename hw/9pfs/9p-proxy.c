@@ -17,6 +17,7 @@
 #include "qemu/error-report.h"
 #include "fsdev/qemu-fsdev.h"
 #include "9p-proxy.h"
+#include "qemu/xattr.h"
 
 typedef struct V9fsProxy {
     int sockfd;
@@ -1000,6 +1001,16 @@ static ssize_t proxy_lgetxattr(FsContext *ctx, V9fsPath *fs_path,
     return retval;
 }
 
+static ssize_t proxy_fgetxattr(FsContext *ctx, int fid_type,
+                               V9fsFidOpenState *fs, const char *name,
+                               void *value, size_t size)
+{
+    int fd;
+
+    fd = v9fs_get_fd_fid(fid_type, fs);
+    return fgetxattr(fd, name, value, size);
+}
+
 static ssize_t proxy_llistxattr(FsContext *ctx, V9fsPath *fs_path,
                                 void *value, size_t size)
 {
@@ -1240,4 +1251,5 @@ FileOperations proxy_ops = {
     .futimens     = proxy_futimens,
     .fchown       = proxy_fchown,
     .fchmod       = proxy_fchmod,
+    .fgetxattr    = proxy_fgetxattr,
 };
