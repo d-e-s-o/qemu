@@ -1203,6 +1203,20 @@ static int v9fs_do_truncate(V9fsPDU *pdu, V9fsFidState *fidp, off_t size)
     return err;
 }
 
+static int v9fs_do_utimens(V9fsPDU *pdu, V9fsFidState *fidp,
+                           struct timespec times[2])
+{
+    int err;
+
+    if (fid_has_file(fidp)) {
+        err = v9fs_co_futimens(pdu, fidp, times);
+    } else {
+        err = v9fs_co_utimensat(pdu, &fidp->path, times);
+    }
+
+    return err;
+}
+
 /* Attribute flags */
 #define P9_ATTR_MODE       (1 << 0)
 #define P9_ATTR_UID        (1 << 1)
@@ -1263,7 +1277,7 @@ static void coroutine_fn v9fs_setattr(void *opaque)
         } else {
             times[1].tv_nsec = UTIME_OMIT;
         }
-        err = v9fs_co_utimensat(pdu, &fidp->path, times);
+        err = v9fs_do_utimens(pdu, fidp, times);
         if (err < 0) {
             goto out;
         }
@@ -2873,7 +2887,7 @@ static void coroutine_fn v9fs_wstat(void *opaque)
         } else {
             times[1].tv_nsec = UTIME_OMIT;
         }
-        err = v9fs_co_utimensat(pdu, &fidp->path, times);
+        err = v9fs_do_utimens(pdu, fidp, times);
         if (err < 0) {
             goto out;
         }
