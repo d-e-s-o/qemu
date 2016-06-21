@@ -1230,6 +1230,19 @@ static int v9fs_do_chown(V9fsPDU *pdu, V9fsFidState *fidp, uid_t uid, gid_t gid)
     return err;
 }
 
+static int v9fs_do_chmod(V9fsPDU *pdu, V9fsFidState *fidp, mode_t mode)
+{
+    int err;
+
+    if (fid_has_file(fidp)) {
+        err = v9fs_co_fchmod(pdu, fidp, mode);
+    } else {
+        err = v9fs_co_chmod(pdu, &fidp->path, mode);
+    }
+
+    return err;
+}
+
 /* Attribute flags */
 #define P9_ATTR_MODE       (1 << 0)
 #define P9_ATTR_UID        (1 << 1)
@@ -1263,7 +1276,7 @@ static void coroutine_fn v9fs_setattr(void *opaque)
         goto out_nofid;
     }
     if (v9iattr.valid & P9_ATTR_MODE) {
-        err = v9fs_co_chmod(pdu, &fidp->path, v9iattr.mode);
+        err = v9fs_do_chmod(pdu, fidp, v9iattr.mode);
         if (err < 0) {
             goto out;
         }
@@ -2878,9 +2891,8 @@ static void coroutine_fn v9fs_wstat(void *opaque)
             err = -EIO;
             goto out;
         }
-        err = v9fs_co_chmod(pdu, &fidp->path,
-                            v9mode_to_mode(v9stat.mode,
-                                           &v9stat.extension));
+        err = v9fs_do_chmod(pdu, fidp, v9mode_to_mode(v9stat.mode,
+                                                      &v9stat.extension));
         if (err < 0) {
             goto out;
         }
