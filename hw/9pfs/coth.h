@@ -101,5 +101,6 @@ int coroutine_fn v9fs_co_fchown(V9fsPDU *, V9fsFidState *, uid_t, gid_t);
 int coroutine_fn v9fs_co_fchmod(V9fsPDU *, V9fsFidState *, mode_t);
 int coroutine_fn v9fs_co_fgetxattr(V9fsPDU *, V9fsFidState *, V9fsString *,
                                    void *, size_t);
+int coroutine_fn v9fs_co_flistxattr(V9fsPDU *, V9fsFidState *, void *, size_t);
 
 #endif
