@@ -255,6 +255,19 @@ static int coroutine_fn v9fs_reopen_fid(V9fsPDU *pdu, V9fsFidState *f)
     return err;
 }
 
+int v9fs_get_fd_fid(int fid_type, V9fsFidOpenState *fs)
+{
+    int fd = -1;
+
+    if (fid_type == P9_FID_DIR) {
+        fd = dirfd(fs->dir.stream);
+    } else if (fid_type == P9_FID_FILE) {
+        fd = fs->fd;
+    }
+
+    return fd;
+}
+
 static V9fsFidState *coroutine_fn get_fid(V9fsPDU *pdu, int32_t fid)
 {
     int err;
